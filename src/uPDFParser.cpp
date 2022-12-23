@@ -605,6 +605,8 @@ namespace uPDFParser
 	    char* subs, c;
 	    int ret;
 	    ret = read(fd, buffer, sizeof(buffer));
+	    if (ret <= 0)
+		EXCEPTION(TRUNCATED_FILE, "Unexpected end of file");
 	    subs = (char*)memmem((void*)buffer, ret, (void*)"endstream", 9);
 	    if (subs)
 	    {
@@ -852,6 +854,7 @@ namespace uPDFParser
 	
 	::write(newFd, "\r", 1);
 
+	int maxId = 0;
 	std::stringstream xref;
 	int nbNewObjects = 0;
 
@@ -861,14 +864,17 @@ namespace uPDFParser
 	std::vector<Object*>::iterator it;
 	for(it=_objects.begin(); it!=_objects.end(); it++)
 	{
-	    if (!(*it)->isNew())
+	    Object* object = *it;
+	    if (object->objectId() > maxId)
+		maxId = object->objectId();
+	    if (!object->isNew())
 		continue;
 	    nbNewObjects ++;
-	    std::string objStr = (*it)->str();
+	    std::string objStr = object->str();
 	    curOffset = lseek(newFd, 0, SEEK_CUR);
 	    ::write(newFd, objStr.c_str(), objStr.size());
-	    xref << std::setw(0) << (*it)->objectId() << " 1\n";
-	    xref << std::setw(10) << curOffset << " " << std::setw(5) << (*it)->generationNumber() << " n\r\n"; // Here \r seems important 
+	    xref << std::setw(0) << object->objectId() << " 1\n";
+	    xref << std::setw(10) << curOffset << " " << std::setw(5) << object->generationNumber() << " n\r\n"; // Here \r seems important 
 	}
 
 	if (!nbNewObjects)
@@ -885,6 +891,8 @@ namespace uPDFParser
 	trailer.deleteKey("Prev");
 	if (xrefOffset != (off_t)-1)
 	    trailer.dictionary().addData("Prev", new Integer((int)xrefOffset));
+	trailer.deleteKey("Size");
+	trailer.dictionary().addData("Size", new Integer(maxId+1));
 
 	std::string trailerStr = trailer.dictionary().str();
 	::write(newFd, "trailer\n", 8);
