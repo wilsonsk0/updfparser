@@ -73,7 +73,9 @@ namespace uPDFParser
 
 	for(it = _value.begin(); it!=_value.end(); it++)
 	{
-	    if (res.size() > 1)
+	    if (res.size() > 1 &&
+		(*it)->type() != DataType::TYPE::INTEGER &&
+		(*it)->type() != DataType::TYPE::REAL)
 		res += " ";
 	    res += (*it)->str();
 	}
@@ -103,8 +105,12 @@ namespace uPDFParser
 
     std::string Stream::str()
     {
-	std::string res = "stream\n";
+	std::string res = "stream";
 	const char* streamData = (const char*)data(); // Force reading if not in memory
+	if (_dataLength &&
+	    streamData[0] != '\n' &&
+	    streamData[0] != '\r')
+	    res += "\n";
 	res += std::string(streamData, _dataLength);
 	// Be sure there is a final line return
 	if (_dataLength &&
@@ -141,7 +147,10 @@ namespace uPDFParser
     {
 	if (_data && freeData)
 	    delete[] _data;
-	
+
+	dict.deleteKey("Length");
+	dict.addData("Length", new Integer(dataLength));
+
 	this->_data = data;
 	this->_dataLength = dataLength;
 	this->freeData = freeData;
