@@ -118,6 +118,7 @@ namespace uPDFParser
 	Name* parseName(std::string& token);
 
 	void repairTrailer();
+	void writeBuffer(int fd, const char* buffer, int size);
 	void writeUpdate(const std::string& filename);
 
 	int version_major, version_minor;

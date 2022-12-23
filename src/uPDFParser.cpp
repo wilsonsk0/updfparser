@@ -619,7 +619,9 @@ namespace uPDFParser
 		for (;endOffset > startOffset; endOffset--)
 		{
 		    lseek(fd, -1, SEEK_CUR);
-		    read(fd, &c, 1);
+		    ret = read(fd, &c, 1);
+		    if (ret <= 0)
+			break;
 		    if (c != '\n' && c != '\r')
 			break;
 		    lseek(fd, -1, SEEK_CUR);
@@ -824,6 +826,24 @@ namespace uPDFParser
 		trailer.dictionary().addData(keys[i], (*xrefObject)[keys[i]]->clone());
 	}
     }
+
+    void Parser::writeBuffer(int fd, const char* buffer, int size)
+    {
+	int ret;
+
+	do {
+	    ret = ::write(fd, buffer, size);
+	    if (ret >= 0)
+	    {
+		size -= ret;
+		buffer += ret;
+	    }
+	    else
+	    {
+		EXCEPTION(IO_ERROR, "IO Error (write) %m");
+	    }
+	} while (size);
+    }
     
     void Parser::writeUpdate(const std::string& filename)
     {
@@ -848,11 +868,11 @@ namespace uPDFParser
 		ret = ::read(fd, buffer, sizeof(buffer));
 		if (ret <= 0)
 		    break;
-		::write(newFd, buffer, ret);
+		writeBuffer(newFd, buffer, ret);
 	    }
 	}
 	
-	::write(newFd, "\r", 1);
+	writeBuffer(newFd, "\r", 1);
 
 	int maxId = 0;
 	std::stringstream xref;
@@ -872,7 +892,7 @@ namespace uPDFParser
 	    nbNewObjects ++;
 	    std::string objStr = object->str();
 	    curOffset = lseek(newFd, 0, SEEK_CUR);
-	    ::write(newFd, objStr.c_str(), objStr.size());
+	    writeBuffer(newFd, objStr.c_str(), objStr.size());
 	    xref << std::setw(0) << object->objectId() << " 1\n";
 	    xref << std::setw(10) << curOffset << " " << std::setw(5) << object->generationNumber() << " n\r\n"; // Here \r seems important 
 	}
@@ -886,7 +906,7 @@ namespace uPDFParser
 	off_t newXrefOffset = lseek(newFd, 0, SEEK_CUR);
 
 	std::string xrefStr = xref.str();
-	::write(newFd, xrefStr.c_str(), xrefStr.size());
+	writeBuffer(newFd, xrefStr.c_str(), xrefStr.size());
 
 	trailer.deleteKey("Prev");
 	if (xrefOffset != (off_t)-1)
@@ -895,14 +915,14 @@ namespace uPDFParser
 	trailer.dictionary().addData("Size", new Integer(maxId+1));
 
 	std::string trailerStr = trailer.dictionary().str();
-	::write(newFd, "trailer\n", 8);
-	::write(newFd, trailerStr.c_str(), trailerStr.size());
+	writeBuffer(newFd, "trailer\n", 8);
+	writeBuffer(newFd, trailerStr.c_str(), trailerStr.size());
 
 	std::stringstream startxref;
 	startxref << "startxref\n" << newXrefOffset << "\n%%EOF";
 	
 	std::string startxrefStr = startxref.str();
-	::write(newFd, startxrefStr.c_str(), startxrefStr.size());
+	writeBuffer(newFd, startxrefStr.c_str(), startxrefStr.size());
 	
 	close(newFd);
     }
@@ -922,7 +942,7 @@ namespace uPDFParser
 			   version_major, version_minor,
 			   0xe2, 0xe3, 0xcf, 0xd3);
 	
-	::write(newFd, header, ret);
+	writeBuffer(newFd, header, ret);
 
 	int maxId = 0;
 	std::stringstream xref;
@@ -939,7 +959,7 @@ namespace uPDFParser
 	    Object* object = *it;
 	    std::string objStr = object->str();
 	    curOffset = lseek(newFd, 0, SEEK_CUR);
-	    ::write(newFd, objStr.c_str(), objStr.size());
+	    writeBuffer(newFd, objStr.c_str(), objStr.size());
 	    xref << std::setw(0) << object->objectId() << " 1\n";
 	    xref << std::setw(10) << curOffset << " " << std::setw(5) << object->generationNumber();
 	    if (object->used())
@@ -966,7 +986,7 @@ namespace uPDFParser
 	off_t newXrefOffset = lseek(newFd, 0, SEEK_CUR);
 
 	std::string xrefStr = xref.str();
-	::write(newFd, xrefStr.c_str(), xrefStr.size());
+	writeBuffer(newFd, xrefStr.c_str(), xrefStr.size());
 
 	trailer.deleteKey("Prev");
 	trailer.deleteKey("Size");
@@ -977,14 +997,14 @@ namespace uPDFParser
 	    trailer.dictionary().addData("XRefStm", new Integer(xrefStmOffset));
 
 	std::string trailerStr = trailer.dictionary().str();
-	::write(newFd, "trailer\n", 8);
-	::write(newFd, trailerStr.c_str(), trailerStr.size());
+	writeBuffer(newFd, "trailer\n", 8);
+	writeBuffer(newFd, trailerStr.c_str(), trailerStr.size());
 
 	std::stringstream startxref;
 	startxref << "startxref\n" << newXrefOffset << "\n%%EOF";
 	
 	std::string startxrefStr = startxref.str();
-	::write(newFd, startxrefStr.c_str(), startxrefStr.size());
+	writeBuffer(newFd, startxrefStr.c_str(), startxrefStr.size());
 	
 	close(newFd);
     }
