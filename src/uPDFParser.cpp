@@ -157,19 +157,22 @@ namespace uPDFParser
 	}
     }
 
+    char Parser::prevChar() { return c; }
+    
     /**
      * @brief Find next token to analyze
      */
     std::string Parser::nextToken(bool exceptionOnEOF, bool readComment)
     {
-	char c = 0, prev_c;
+	char prev_c;
 	std::string res("");
 	int i;
 	static const char delims[] = " \t<>[]()/";
 	static const char whitespace_prev_delims[] = "+-"; // Need whitespace before
 	static const char start_delims[] = "<>[]()";
 	bool found = false;
-	
+
+	c = 0;
 	while (!found)
 	{
 	    prev_c = c;
@@ -574,9 +577,19 @@ namespace uPDFParser
     {
 	off_t startOffset, endOffset, endStream;
 	std::string token;
+	char c = 0;
 	
 	// std::cout << "parseStream" << std::endl;
 	
+	// Remove \n after \r if there is one
+	if (prevChar() == '\r' && read(fd, &c, 1) == 1)
+	{
+	    if (c != '\n')
+	    {
+		lseek(fd, -1, SEEK_CUR);
+	    }
+	}
+
 	startOffset = lseek(fd, 0, SEEK_CUR);
 
 	if (!object->hasKey("Length"))
@@ -622,9 +635,16 @@ namespace uPDFParser
 		    ret = read(fd, &c, 1);
 		    if (ret <= 0)
 			break;
-		    if (c != '\n' && c != '\r')
-			break;
-		    lseek(fd, -1, SEEK_CUR);
+		    if (c == '\r')
+		    {
+			lseek(fd, -1, SEEK_CUR);
+			continue;
+		    }
+		    else if (c == '\n')
+		    {
+			lseek(fd, -1, SEEK_CUR);
+		    }
+		    break;
 		}
 		// Adjust final position
 		lseek(fd, endStream, SEEK_SET);

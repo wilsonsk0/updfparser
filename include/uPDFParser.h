@@ -104,6 +104,7 @@ namespace uPDFParser
 	bool parseXref();
 	bool parseTrailer();
 
+	char prevChar();
 	std::string nextToken(bool exceptionOnEOF=true, bool readComment=false);
 	
 	DataType* parseType(std::string& token, Object* object, std::map<std::string, DataType*>& dict);
@@ -121,6 +122,7 @@ namespace uPDFParser
 	void writeBuffer(int fd, const char* buffer, int size);
 	void writeUpdate(const std::string& filename);
 
+	char c;
 	int version_major, version_minor;
 	std::vector<Object*> _objects;
 	Object trailer, *xrefObject;
