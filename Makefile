@@ -2,7 +2,7 @@
 AR ?= $(CROSS)ar
 CXX ?= $(CROSS)g++
 
-CXXFLAGS=-Wall -fPIC -I./include
+CXXFLAGS += -Wall -fPIC -I./include
 LDFLAGS=
 
 BUILD_STATIC ?= 0
