@@ -20,6 +20,7 @@
 #ifndef _UPDFOBJECT_HPP_
 #define _UPDFOBJECT_HPP_
 
+#include <stdint.h>
 #include "uPDFTypes.h"
 
 namespace uPDFParser
