@@ -73,13 +73,28 @@ namespace uPDFParser
 
 	for(it = _value.begin(); it!=_value.end(); it++)
 	{
-	    if (res.size() > 1 &&
-		(*it)->type() != DataType::TYPE::INTEGER &&
-		(*it)->type() != DataType::TYPE::REAL)
-		res += " ";
-	    res += (*it)->str();
+	    /* These types has already a space in front */
+	    if ((*it)->type() != DataType::TYPE::INTEGER &&
+		(*it)->type() != DataType::TYPE::REAL &&
+		(*it)->type() != DataType::TYPE::REFERENCE)
+	    {
+		if (res.size() > 1)
+		    res += " ";
+		res += (*it)->str();
+	    }
+	    else
+	    {
+		if (res.size() > 1)
+		    res += (*it)->str();
+		/* First time, remove front space*/
+		else
+		    res += (*it)->str().substr(1);
+	    }
 	}
-	    
+
+	if (res.size() == 1)
+	    res += " ";
+	
 	return res + "]";
     }
 

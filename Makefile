@@ -41,10 +41,10 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 libupdfparser.a: $(OBJECTS)
-	$(AR) crs $@ obj/*.o
+	$(AR) crs $@ $^
 
 libupdfparser.so: $(OBJECTS)
-	$(CXX) obj/*.o $(LDFLAGS) -o $@ -shared
+	$(CXX) $^ $(LDFLAGS) -o $@ -shared
 
 test: tests/test.cpp libupdfparser.a
 	g++ -ggdb -O0 $^ -o $@ -Iinclude libupdfparser.a
