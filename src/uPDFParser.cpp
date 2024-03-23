@@ -847,6 +847,21 @@ namespace uPDFParser
 	}
     }
 
+    void Parser::removeObject(Object* object)
+    {
+	std::vector<Object*>::iterator it;
+
+	for(it = _objects.begin(); it != _objects.end(); it++)
+	{
+	    if (**it == *object)
+	    {
+		delete *it;
+		_objects.erase(it);
+		break;
+	    }
+	}	
+    }
+    
     void Parser::writeBuffer(int fd, const char* buffer, int size)
     {
 	int ret;

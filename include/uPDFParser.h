@@ -82,13 +82,18 @@ namespace uPDFParser
 	void addObject(Object* object) { _objects.push_back(object); }
 
 	/**
+	 * @brief Remove an object from list and crefTable
+	 */
+	void removeObject(Object* object);
+
+	/**
 	 * @brief Return trailer object
 	 */
 	Object& getTrailer() {return trailer; }
 
 	/**
 	 * @brief Return xref table. This table is read and updated only once after parse
-	 * Further add/delete will make it incoherent
+	 * It's not used for write operation
 	 */
 	const std::vector<XRefValue>& xrefTable() {return _xrefTable;}
 
